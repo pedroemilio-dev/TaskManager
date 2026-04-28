@@ -19,10 +19,6 @@ target/
 *.iml
 *.ipr
 
-frontend/src/pages/Inbox.tsx
-frontend/src/pages/Urgentes.tsx
-frontend/src/pages/Concluida.tsx
-frontend/src/pages/Semana.tsx
 
 ### NetBeans ###
 /nbproject/private/

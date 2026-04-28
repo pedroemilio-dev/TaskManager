@@ -2,9 +2,9 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Inbox from "./pages/Inbox";
-import Semana from "./pages/Semana";
-import Urgentes from "./pages/Urgentes";
-import Concluidas from "./pages/Concluida";
+import Semana from "./pages/Week";
+import Urgentes from "./pages/Urgents";
+import Concluidas from "./pages/Completed";
 import Layout from "@/components/Layout";
 import PrivateRoute from "./components/PrivateRoute";
 

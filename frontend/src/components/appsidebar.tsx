@@ -80,7 +80,7 @@ export function AppSidebar() {
             <SidebarMenu>
               {navItems.map((item) => (
                 <SidebarMenuItem key={item.path}>
-                  <SidebarMenuButton tooltip={item.label} isActive={location.pathname === item.path} onClick={() => navigate(item.path)}>
+                  <SidebarMenuButton tooltip={item.label} isActive={location.pathname === item.path} onClick={() => navigate(item.path)} className="hover:bg-[#1f232a]">
                     <item.icon />
                     <span>{item.label}</span>
                   </SidebarMenuButton>
@@ -97,7 +97,7 @@ export function AppSidebar() {
                     <SidebarMenuItem>
                         <Dialog>
                             <DialogTrigger asChild>
-                                <SidebarMenuButton>
+                                <SidebarMenuButton className="hover:bg-[#1f232a]">
                                     <Plus />
                                     <span>New Project</span>
                                 </SidebarMenuButton>
