@@ -1,5 +1,6 @@
 package com.exemplo.taskmanager.model;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import jakarta.persistence.Column;
@@ -41,7 +42,7 @@ public class Task {
     @Enumerated(EnumType.STRING)
     private Priority priority = Priority.DEFAULT;
 
-    private LocalDateTime dueDate;
+    private LocalDate dueDate;
 
     @Builder.Default
     @Column(nullable = false, updatable = false)
