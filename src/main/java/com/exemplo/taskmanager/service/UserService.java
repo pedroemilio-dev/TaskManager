@@ -39,7 +39,7 @@ public class UserService {
 
     public AuthResponse register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("Email wlready registerd");
+            throw new RuntimeException("Email already registerd");
         }
 
         User user = User.builder()
@@ -66,29 +66,6 @@ public class UserService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         refreshTokenRepository.deleteByUser(user);
-
-        return generateAuthResponse(user);
-    }
-
-    // ─── Refresh Token ───────────────────────────────────────
-
-    public AuthResponse refresh(RefreshTokenRequest request) {
-        RefreshToken refreshToken = refreshTokenRepository
-                .findByToken(request.getRefreshToken())
-                .orElseThrow(() -> new RuntimeException("Invalid refresh token"));
-
-        if (refreshToken.isRevoked()) {
-            throw new RuntimeException("Refresh token revoked");
-        }
-
-        if (refreshToken.getExpiresAt().isBefore(LocalDateTime.now())) {
-            throw new RuntimeException("Refresh token expired");
-        }
-
-        User user = refreshToken.getUser();
-
-        refreshToken.setRevoked(true);
-        refreshTokenRepository.save(refreshToken);
 
         return generateAuthResponse(user);
     }
@@ -138,6 +115,29 @@ public class UserService {
     public void deleteAccount(User user, String accessToken) {
         logout(accessToken, user);
         userRepository.delete(user);
+    }
+
+    // ─── Refresh Token ───────────────────────────────────────
+
+    public AuthResponse refresh(RefreshTokenRequest request) {
+        RefreshToken refreshToken = refreshTokenRepository
+                .findByToken(request.getRefreshToken())
+                .orElseThrow(() -> new RuntimeException("Invalid refresh token"));
+
+        if (refreshToken.isRevoked()) {
+            throw new RuntimeException("Refresh token revoked");
+        }
+
+        if (refreshToken.getExpiresAt().isBefore(LocalDateTime.now())) {
+            throw new RuntimeException("Refresh token expired");
+        }
+
+        User user = refreshToken.getUser();
+
+        refreshToken.setRevoked(true);
+        refreshTokenRepository.save(refreshToken);
+
+        return generateAuthResponse(user);
     }
 
     // ─── Auxiliar Methods ──────────────────────────────────
