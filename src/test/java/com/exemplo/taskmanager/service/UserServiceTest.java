@@ -80,6 +80,9 @@ class UserServiceTest {
         assertThat(response.getAccessToken()).isEqualTo("access_token");
         assertThat(response.getRefreshToken()).isEqualTo("refresh_token");
         assertThat(response.getName()).isEqualTo("Alice");
+
+        verify(userRepository).existsByEmail(request.getEmail());
+        verify(passwordEncoder).encode(request.getPassword());
         verify(userRepository).save(any(User.class));
     }
 
@@ -93,10 +96,10 @@ class UserServiceTest {
 
         when(userRepository.existsByEmail(request.getEmail())).thenReturn(true);
 
-        assertThatThrownBy(() -> userService.register(request))
-                .isInstanceOf(RuntimeException.class)
-                .hasMessageContaining("Email");
+        assertThatThrownBy(() -> userService.register(request)).isInstanceOf(RuntimeException.class).hasMessageContaining("Email");
 
+        verify(userRepository).existsByEmail("alice@example.com");
+        verify(passwordEncoder, never()).encode(any());
         verify(userRepository, never()).save(any());
     }
 
@@ -116,6 +119,9 @@ class UserServiceTest {
         AuthResponse response = userService.login(request);
 
         assertThat(response.getAccessToken()).isEqualTo("access_token");
+
+        verify(userRepository).findByEmail("alice@example.com");
+        verify(authenticationManager).authenticate(any());
         verify(refreshTokenRepository).deleteByUser(user);
         verify(refreshTokenRepository).save(any(RefreshToken.class));
     }
@@ -127,12 +133,12 @@ class UserServiceTest {
         request.setEmail("alice@example.com");
         request.setPassword("password123");
 
-        doThrow(new BadCredentialsException("Bad credentials"))
-                .when(authenticationManager).authenticate(any());
+        doThrow(new BadCredentialsException("Bad credentials")).when(authenticationManager).authenticate(any());
 
-        assertThatThrownBy(() -> userService.login(request))
-                .isInstanceOf(BadCredentialsException.class);
-
+        assertThatThrownBy(() -> userService.login(request)).isInstanceOf(BadCredentialsException.class);
+        
+        verify(authenticationManager).authenticate(any());
+        verify(refreshTokenRepository, never()).save(any());
         verify(userRepository, never()).findByEmail(any());
     }
 
@@ -148,6 +154,7 @@ class UserServiceTest {
         userService.logout(access_token, user);
 
         verify(blacklistedTokenRepository).save(any(BlacklistedToken.class));
+        verify(jwtUtil).extractExpiration(access_token);
         verify(refreshTokenRepository).deleteByUser(user);
     }
 
@@ -177,7 +184,7 @@ class UserServiceTest {
         assertThat(response.getName()).isEqualTo("Teste");
         assertThat(response.getEmail()).isEqualTo("teste@gmail.com");
 
-        verify(userRepository).save(any(User.class));
+        verify(userRepository).save(user);
     }
 
     // Should update only the name and save the user
@@ -191,7 +198,7 @@ class UserServiceTest {
         assertThat(response.getName()).isEqualTo("Teste");
         assertThat(response.getEmail()).isEqualTo("alice@example.com");
 
-        verify(userRepository).save(any(User.class));
+        verify(userRepository).save(user);
     }
 
     // Should update only the email and save the user
@@ -205,7 +212,7 @@ class UserServiceTest {
         assertThat(response.getEmail()).isEqualTo("teste@gmail.com");
         assertThat(response.getName()).isEqualTo("Alice");
 
-        verify(userRepository).save(any(User.class));
+        verify(userRepository).save(user);
     }
 
     // ─── Change Password ───────────────────────────────────────────────
@@ -222,6 +229,8 @@ class UserServiceTest {
 
         userService.changePassword(user, request);
 
+        verify(passwordEncoder).matches(request.getCurrentPassword(), "hashed_password");
+        verify(passwordEncoder).encode(request.getNewPassword());
         verify(userRepository).save(any(User.class));
     }
 
@@ -236,6 +245,8 @@ class UserServiceTest {
 
         assertThatThrownBy(() -> userService.changePassword(user, request)).isInstanceOf(RuntimeException.class).hasMessageContaining("Password");
 
+        verify(passwordEncoder).matches(request.getCurrentPassword(), user.getPassword());
+        verify(passwordEncoder, never()).encode(any());
         verify(userRepository, never()).save(any());
     }
 
@@ -250,9 +261,9 @@ class UserServiceTest {
 
         userService.deleteAccount(user, access_token);
 
+        verify(jwtUtil).extractExpiration(access_token);
         verify(blacklistedTokenRepository).save(any(BlacklistedToken.class));
         verify(refreshTokenRepository).deleteByUser(user);
-
         verify(userRepository).delete(user);
     }
 
@@ -274,6 +285,8 @@ class UserServiceTest {
         userService.refresh(request);
 
         assertTrue(refreshToken.isRevoked());
+
+        verify(refreshTokenRepository).findByToken("RefreshToken");
         verify(refreshTokenRepository).save(refreshToken);
     }
 
@@ -285,6 +298,8 @@ class UserServiceTest {
         when(refreshTokenRepository.findByToken("RefreshToken")).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> userService.refresh(request)).isInstanceOf(RuntimeException.class).hasMessageContaining("Invalid refresh token");
+
+        verify(refreshTokenRepository).findByToken("RefreshToken");
     }
 
     @Test
@@ -301,6 +316,9 @@ class UserServiceTest {
         when(refreshTokenRepository.findByToken("RefreshToken")).thenReturn(Optional.of(refreshToken));
 
         assertThatThrownBy(() -> userService.refresh(request)).isInstanceOf(RuntimeException.class).hasMessageContaining("Refresh token revoked");
+
+        verify(refreshTokenRepository).findByToken("RefreshToken");
+        verify(refreshTokenRepository, never()).save(any());
     }
 
     // Expires at, refresh token error
@@ -318,5 +336,8 @@ class UserServiceTest {
         when(refreshTokenRepository.findByToken("RefreshToken")).thenReturn(Optional.of(refreshToken));
 
         assertThatThrownBy(() -> userService.refresh(request)).isInstanceOf(RuntimeException.class).hasMessageContaining("Refresh token expired");
+
+        verify(refreshTokenRepository).findByToken("RefreshToken");
+        verify(refreshTokenRepository, never()).save(any());
     }
 }

@@ -51,6 +51,9 @@ public class ProjectServiceTest {
                 .build();
     }
 
+    // ─── Create Project ────────────────────────────────────────────
+
+    // Should create a project without a parent
     @Test
     void createProjectSuccess() {
         CreateProjectRequest request = new CreateProjectRequest();
@@ -65,6 +68,9 @@ public class ProjectServiceTest {
         verify(projectRepository).save(any(Project.class));
     }
 
+    // ─── Create Sub Project ────────────────────────────────────────────
+
+    // Should create a subproject with a valid parent
     @Test
     void createSubProjectSuccess() {
         CreateProjectRequest request = new CreateProjectRequest();
@@ -84,6 +90,7 @@ public class ProjectServiceTest {
         verify(projectRepository).save(any(Project.class));
     }
 
+    // Should throw exception when parent project is not found
     @Test
     void createSubProjectFailure() {
         CreateProjectRequest request = new CreateProjectRequest();
@@ -98,6 +105,7 @@ public class ProjectServiceTest {
         verify(projectRepository, never()).save(any(Project.class));
     }
 
+    // Should throw exception when parent is already a subproject
     @Test
     void createSubProjectWithParentFailure() {
         Project grandParent = Project.builder()
@@ -122,6 +130,9 @@ public class ProjectServiceTest {
         verify(projectRepository, never()).save(any(Project.class));
     }
 
+    // ─── Get Project ────────────────────────────────────────────
+
+    // Should return the project when found
     @Test
     void getProjectSuccess() {
         when(projectRepository.findByIdAndUser(2L, user)).thenReturn(Optional.of(project));
@@ -131,6 +142,7 @@ public class ProjectServiceTest {
         assertThat(response.getName()).isEqualTo("Groceries");
     }
 
+    // Should throw exception when project is not found
     @Test
     void getProjectNotFoundFailure() {
         when(projectRepository.findByIdAndUser(2L, user)).thenReturn(Optional.empty());
@@ -138,6 +150,9 @@ public class ProjectServiceTest {
         assertThatThrownBy(() -> projectService.getProject(2L, user)).isInstanceOf(RuntimeException.class).hasMessageContaining("Project not found");
     }
 
+    // ─── Get All Projects ────────────────────────────────────────────
+
+    // Should return all root projects for the user
     @Test
     void getAllProjectsSuccess() {
         when(projectRepository.findByUserAndParentIsNull(user)).thenReturn(List.of(project));
@@ -148,6 +163,7 @@ public class ProjectServiceTest {
         assertThat(response.get(0).getName()).isEqualTo("Groceries");
     }
 
+    // Should return an empty list when there are no projects
     @Test
     void getAllProjectsEmpty() {
         when(projectRepository.findByUserAndParentIsNull(user)).thenReturn(List.of());
@@ -157,6 +173,9 @@ public class ProjectServiceTest {
         assertThat(response).isEmpty();
     }
 
+    // ─── Edit Project ────────────────────────────────────────────
+
+    // Should update the project name and save
     @Test
     void editProjectSuccess() {
         EditProjectRequest request = new EditProjectRequest();
@@ -172,6 +191,7 @@ public class ProjectServiceTest {
         verify(projectRepository).save(any(Project.class));
     }
 
+    // Should move the project to be a subproject of another
     @Test
     void editProjectToSubProjectSuccess() {
         Project grandParent = Project.builder()
@@ -197,6 +217,7 @@ public class ProjectServiceTest {
         verify(projectRepository).save(any(Project.class));
     }
 
+    // Should throw exception when the new parent project is not found
     @Test
     void editProjectSubProjectFailure() {
         EditProjectRequest request = new EditProjectRequest();
@@ -212,6 +233,7 @@ public class ProjectServiceTest {
         verify(projectRepository, never()).save(any(Project.class));
     }
 
+    // Should throw exception when the new parent is already a subproject
     @Test
     void editProjectSubProjectAlreadyHasParentFailure() {
         Project grandParent = Project.builder()
@@ -247,6 +269,9 @@ public class ProjectServiceTest {
         verify(projectRepository, never()).save(any(Project.class));
     }
 
+    // ─── Delete Project ────────────────────────────────────────────
+
+    // Should delete the project when found
     @Test
     void deleteProjectSuccess() {
         when(projectRepository.findByIdAndUser(2L, user)).thenReturn(Optional.of(project));
@@ -257,6 +282,7 @@ public class ProjectServiceTest {
         verify(projectRepository).delete(project);
     }
 
+    // Should throw exception when project is not found
     @Test
     void deleteProjectNotFoundFailure() {
         when(projectRepository.findByIdAndUser(2L, user)).thenReturn(Optional.empty());

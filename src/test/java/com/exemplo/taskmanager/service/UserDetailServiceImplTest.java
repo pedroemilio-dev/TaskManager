@@ -1,6 +1,7 @@
 package com.exemplo.taskmanager.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -13,6 +14,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 import com.exemplo.taskmanager.model.User;
 import com.exemplo.taskmanager.repository.UserRepository;
@@ -37,6 +39,7 @@ public class UserDetailServiceImplTest {
                 .build();
     }
     
+    // Should return the user when found
     @Test
     void loadUserByUsernameSuccess() {
         when(userRepository.findByEmail("alice@example.com")).thenReturn(Optional.of(user));
@@ -44,6 +47,16 @@ public class UserDetailServiceImplTest {
         UserDetails result = userDetailsServiceImpl.loadUserByUsername("alice@example.com");
 
         assertThat(result.getUsername()).isEqualTo("alice@example.com");
+
+        verify(userRepository).findByEmail("alice@example.com");
+    }
+
+    // Should throw exception when user is not found
+    @Test
+    void loadUserByUsernameNotFoundFailure() {
+        when(userRepository.findByEmail("alice@example.com")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> userDetailsServiceImpl.loadUserByUsername("alice@example.com")).isInstanceOf(UsernameNotFoundException.class).hasMessageContaining("User not found");
 
         verify(userRepository).findByEmail("alice@example.com");
     }
