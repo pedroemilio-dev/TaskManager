@@ -39,9 +39,9 @@ public class ProjectService {
                 .parent(parent)
                 .build();
 
-        Project saved = projectRepository.save(project);
+        projectRepository.save(project);
 
-        return toResponse(saved);
+        return toResponse(project);
     }
 
     @Transactional
@@ -119,7 +119,8 @@ public class ProjectService {
             task.isCompleted(),
             task.getPriority(),
             task.getDueDate(),
-            task.getCreatedAt()
+            task.getCreatedAt(),
+            task.getProject() != null ? task.getProject().getId() : null
     );
 }
 }
