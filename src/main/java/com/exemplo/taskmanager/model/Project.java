@@ -35,7 +35,8 @@ public class Project {
     @ToString.Exclude
     private List<Project> subProjects = new ArrayList<>();
 
+    @Builder.Default
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL)
     @ToString.Exclude
-    private List<Task> tasks;
+    private List<Task> tasks = new ArrayList<>();
 }

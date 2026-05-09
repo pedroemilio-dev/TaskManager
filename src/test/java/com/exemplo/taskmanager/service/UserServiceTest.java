@@ -6,6 +6,7 @@ import com.exemplo.taskmanager.dto.auth.LoginRequest;
 import com.exemplo.taskmanager.dto.user.UpdateUserRequest;
 import com.exemplo.taskmanager.dto.user.ChangePasswordRequest;
 import com.exemplo.taskmanager.dto.auth.RegisterRequest;
+import com.exemplo.taskmanager.dto.auth.RefreshTokenRequest;
 import com.exemplo.taskmanager.model.RefreshToken;
 import com.exemplo.taskmanager.model.User;
 import com.exemplo.taskmanager.repository.BlacklistedTokenRepository;
@@ -24,10 +25,12 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.exemplo.taskmanager.model.BlacklistedToken;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -251,5 +254,69 @@ class UserServiceTest {
         verify(refreshTokenRepository).deleteByUser(user);
 
         verify(userRepository).delete(user);
+    }
+
+    // ─── Refresh Token ───────────────────────────────────────────────
+    
+    @Test
+    void refreshSuccess() {
+        RefreshToken refreshToken = new RefreshToken();
+        refreshToken.setToken("RefreshToken");
+        refreshToken.setRevoked(false);
+        refreshToken.setExpiresAt(LocalDateTime.now().plusDays(7));
+        refreshToken.setUser(user);
+
+        RefreshTokenRequest request = new RefreshTokenRequest();
+        request.setRefreshToken("RefreshToken");
+
+        when(refreshTokenRepository.findByToken("RefreshToken")).thenReturn(Optional.of(refreshToken));
+
+        userService.refresh(request);
+
+        assertTrue(refreshToken.isRevoked());
+        verify(refreshTokenRepository).save(refreshToken);
+    }
+
+    @Test
+    void refreshGetTokenFailure() {
+         RefreshTokenRequest request = new RefreshTokenRequest();
+        request.setRefreshToken("RefreshToken");
+
+        when(refreshTokenRepository.findByToken("RefreshToken")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> userService.refresh(request)).isInstanceOf(RuntimeException.class).hasMessageContaining("Invalid refresh token");
+    }
+
+    @Test
+    void refreshTokenRevokedFailure() {
+        RefreshToken refreshToken = new RefreshToken();
+        refreshToken.setToken("RefreshToken");
+        refreshToken.setRevoked(true);
+        refreshToken.setExpiresAt(LocalDateTime.now().plusDays(7));
+        refreshToken.setUser(user);
+
+        RefreshTokenRequest request = new RefreshTokenRequest();
+        request.setRefreshToken("RefreshToken");
+
+        when(refreshTokenRepository.findByToken("RefreshToken")).thenReturn(Optional.of(refreshToken));
+
+        assertThatThrownBy(() -> userService.refresh(request)).isInstanceOf(RuntimeException.class).hasMessageContaining("Refresh token revoked");
+    }
+
+    // Expires at, refresh token error
+    @Test
+    void refreshTokenExpiredFailure() {
+        RefreshToken refreshToken = new RefreshToken();
+        refreshToken.setToken("RefreshToken");
+        refreshToken.setRevoked(false);
+        refreshToken.setExpiresAt(LocalDateTime.now().minusDays(1));
+        refreshToken.setUser(user);
+
+        RefreshTokenRequest request = new RefreshTokenRequest();
+        request.setRefreshToken("RefreshToken");
+
+        when(refreshTokenRepository.findByToken("RefreshToken")).thenReturn(Optional.of(refreshToken));
+
+        assertThatThrownBy(() -> userService.refresh(request)).isInstanceOf(RuntimeException.class).hasMessageContaining("Refresh token expired");
     }
 }

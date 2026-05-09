@@ -18,4 +18,5 @@ public class TaskResponse {
     private Priority priority;
     private LocalDate dueDate;
     private LocalDateTime createdAt;
+    private Long projectId;
 }

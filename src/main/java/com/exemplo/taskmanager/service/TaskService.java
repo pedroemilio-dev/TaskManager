@@ -101,7 +101,8 @@ public class TaskService {
                 task.isCompleted(),
                 task.getPriority(),
                 task.getDueDate(),
-                task.getCreatedAt()
+                task.getCreatedAt(),
+                task.getProject() != null ? task.getProject().getId() : null
         );
     }
 }

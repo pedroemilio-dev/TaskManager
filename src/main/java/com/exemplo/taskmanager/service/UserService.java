@@ -98,7 +98,7 @@ public class UserService {
         if (request.getEmail() != null) user.setEmail(request.getEmail());
         userRepository.save(user);
         return toUserResponse(user);
-    }
+    } 
 
     // ─── Change Password ────────────────────────────────────
 
