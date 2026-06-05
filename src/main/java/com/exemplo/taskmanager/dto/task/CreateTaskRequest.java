@@ -4,11 +4,14 @@ import java.time.LocalDate;
 
 import com.exemplo.taskmanager.model.Task.Priority;
 
+import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 @Data
 public class CreateTaskRequest {
+    @NotBlank
     private String name;
+    
     private String description;
     private LocalDate dueDate;
     private Priority priority;

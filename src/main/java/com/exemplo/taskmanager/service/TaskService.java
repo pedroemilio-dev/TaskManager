@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.exemplo.taskmanager.dto.task.CreateTaskRequest;
 import com.exemplo.taskmanager.dto.task.EditTaskRequest;
 import com.exemplo.taskmanager.dto.task.TaskResponse;
+import com.exemplo.taskmanager.exception.ResourceNotFoundException;
 import com.exemplo.taskmanager.model.Project;
 import com.exemplo.taskmanager.model.Task;
 import com.exemplo.taskmanager.model.User;
@@ -29,7 +30,7 @@ public class TaskService {
         Project project = null;
         if (request.getProjectId() != null) {
             project = projectRepository.findByIdAndUser(request.getProjectId(), user)
-                    .orElseThrow(() -> new RuntimeException("Project not found"));
+                    .orElseThrow(() -> new ResourceNotFoundException("Project not found"));
         }
 
         Task task = Task.builder()
@@ -48,21 +49,21 @@ public class TaskService {
 
     @Transactional
     public TaskResponse getTask(Long taskId, User user) {
-        Task task = taskRepository.findByIdAndUser(taskId, user).orElseThrow(() -> new RuntimeException("Task not found"));
+        Task task = taskRepository.findByIdAndUser(taskId, user).orElseThrow(() -> new ResourceNotFoundException("Task not found"));
 
         return toTaskResponse(task);
     }
 
     @Transactional
     public TaskResponse editTask(Long taskId, EditTaskRequest request, User user) {
-        Task task = taskRepository.findByIdAndUser(taskId, user).orElseThrow(() -> new RuntimeException("Task not found"));
+        Task task = taskRepository.findByIdAndUser(taskId, user).orElseThrow(() -> new ResourceNotFoundException("Task not found"));
 
         if(request.getName() != null) task.setName(request.getName());
         if(request.getDescription() != null) task.setDescription(request.getDescription());
         if(request.getDueDate() != null) task.setDueDate(request.getDueDate());
         if(request.getPriority() != null) task.setPriority(request.getPriority());
         if(request.getProjectId() != null) {
-            Project project = projectRepository.findByIdAndUser(request.getProjectId(), user).orElseThrow(() -> new RuntimeException("Project not found"));
+            Project project = projectRepository.findByIdAndUser(request.getProjectId(), user).orElseThrow(() -> new ResourceNotFoundException("Project not found"));
             task.setProject(project);
         }
 
@@ -73,14 +74,14 @@ public class TaskService {
     @Transactional
     public void deleteTask(Long taskId, User user) {
         Task task = taskRepository.findByIdAndUser(taskId, user)
-                .orElseThrow(() -> new RuntimeException("Task not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Task not found"));
         taskRepository.delete(task);
     }
 
     @Transactional
     public TaskResponse toggleTask(Long taskId, User user) {
         Task task = taskRepository.findByIdAndUser(taskId, user)
-                .orElseThrow(() -> new RuntimeException("Task not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Task not found"));
         task.setCompleted(!task.isCompleted());
         taskRepository.save(task);
         return toTaskResponse(task);

@@ -7,6 +7,10 @@ import com.exemplo.taskmanager.dto.auth.RegisterRequest;
 import com.exemplo.taskmanager.dto.user.ChangePasswordRequest;
 import com.exemplo.taskmanager.dto.user.UpdateUserRequest;
 import com.exemplo.taskmanager.dto.user.UserResponse;
+import com.exemplo.taskmanager.exception.EmailAlreadyExistsException;
+import com.exemplo.taskmanager.exception.InvalidPasswordException;
+import com.exemplo.taskmanager.exception.InvalidTokenException;
+import com.exemplo.taskmanager.exception.ResourceNotFoundException;
 import com.exemplo.taskmanager.model.BlacklistedToken;
 import com.exemplo.taskmanager.model.RefreshToken;
 import com.exemplo.taskmanager.model.User;
@@ -39,7 +43,7 @@ public class UserService {
 
     public AuthResponse register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("Email already registerd");
+            throw new EmailAlreadyExistsException("Email already registerd");
         }
 
         User user = User.builder()
@@ -63,7 +67,7 @@ public class UserService {
         );
 
         User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         refreshTokenRepository.deleteByUser(user);
 
@@ -104,7 +108,7 @@ public class UserService {
 
     public void changePassword(User user, ChangePasswordRequest request) {
         if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
-            throw new RuntimeException("Password atual incorreta");
+            throw new InvalidPasswordException("Password atual incorreta");
         }
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
         userRepository.save(user);
@@ -122,14 +126,14 @@ public class UserService {
     public AuthResponse refresh(RefreshTokenRequest request) {
         RefreshToken refreshToken = refreshTokenRepository
                 .findByToken(request.getRefreshToken())
-                .orElseThrow(() -> new RuntimeException("Invalid refresh token"));
+                .orElseThrow(() -> new InvalidTokenException("Invalid refresh token"));
 
         if (refreshToken.isRevoked()) {
-            throw new RuntimeException("Refresh token revoked");
+            throw new InvalidTokenException("Refresh token revoked");
         }
 
         if (refreshToken.getExpiresAt().isBefore(LocalDateTime.now())) {
-            throw new RuntimeException("Refresh token expired");
+            throw new InvalidTokenException("Refresh token expired");
         }
 
         User user = refreshToken.getUser();
