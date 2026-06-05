@@ -8,6 +8,8 @@ import com.exemplo.taskmanager.dto.project.CreateProjectRequest;
 import com.exemplo.taskmanager.dto.project.EditProjectRequest;
 import com.exemplo.taskmanager.dto.project.ProjectResponse;
 import com.exemplo.taskmanager.dto.task.TaskResponse;
+import com.exemplo.taskmanager.exception.BusinessRuleException;
+import com.exemplo.taskmanager.exception.ResourceNotFoundException;
 import com.exemplo.taskmanager.model.Project;
 import com.exemplo.taskmanager.model.Task;
 import com.exemplo.taskmanager.model.User;
@@ -47,7 +49,7 @@ public class ProjectService {
     @Transactional
     public ProjectResponse getProject(Long id, User user) {
         Project project = projectRepository.findByIdAndUser(id, user)
-                .orElseThrow(() -> new RuntimeException("Project not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Project not found"));
 
         return toResponse(project);
     }
@@ -72,7 +74,7 @@ public class ProjectService {
                 Project newParent = projectRepository.findByIdAndUser(request.getParentId(), user).orElseThrow(() -> new RuntimeException("Project not found"));
 
                 if(newParent.getParent() != null) {
-                    throw new RuntimeException("Subprojects cannot have subprojects");
+                    throw new BusinessRuleException("Subprojects cannot have subprojects");
                 }
 
                 project.setParent(newParent);
@@ -87,7 +89,7 @@ public class ProjectService {
     @Transactional
     public void deleteProject(Long id, User user) {
         Project project = projectRepository.findByIdAndUser(id, user)
-                .orElseThrow(() -> new RuntimeException("Project not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Project not found"));
 
         projectRepository.delete(project);
     }

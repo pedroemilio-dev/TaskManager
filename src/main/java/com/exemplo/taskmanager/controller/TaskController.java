@@ -20,6 +20,7 @@ import com.exemplo.taskmanager.dto.task.TaskResponse;
 import com.exemplo.taskmanager.model.User;
 import com.exemplo.taskmanager.service.TaskService;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -40,7 +41,7 @@ public class TaskController {
     }
 
     @PostMapping
-    public ResponseEntity<TaskResponse> createTask(@RequestBody CreateTaskRequest request, @AuthenticationPrincipal User user) {
+    public ResponseEntity<TaskResponse> createTask(@Valid @RequestBody CreateTaskRequest request, @AuthenticationPrincipal User user) {
         return ResponseEntity.status(HttpStatus.CREATED).body(taskService.createTask(request, user));
     }
 
